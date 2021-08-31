@@ -8,6 +8,7 @@ module Api
 				caminho = "/home/darlan/Downloads/proposals.txt"
 				arrPresentations = []
 				arrPresentationsAux = []
+				arrTitlePresentation = []
 				arrTimePresentation = []
 				arrTimePresentationAux = []
 				lines = ""
@@ -53,6 +54,7 @@ module Api
 					end
 					
 					arrPresentations[counter] = {"title":titlePresentation,"time":timePresentation}
+					arrTitlePresentation[counter] = titlePresentation
 
 					if timePresentation == ""
 						arrTimePresentation[counter] = "05"
@@ -66,10 +68,6 @@ module Api
 				  end
 				end
 
-				#finalJSON = {"lista": arrPresentations}
-				totalTimeMorningSession = 0
-				totalTimeAfternoonEvent = 0
-				totalTimeNetworkingEvent = 0
 				tracks = {}
 				morningSession = {}
 				afternoonSession = {}
@@ -83,45 +81,75 @@ module Api
 					arrTimePresentationAux.push(x)
 				end
 
-				counter = 0
-				counter2 = 0
-				counter3 = 0
-				for i in 0..arrPresentations.length do
-					if totalTimeMorningSession < 180 and arrPresentationsAux[i] != ""
-						totalTimeMorningSession += arrTimePresentationAux[i].to_i
-						arrTimePresentationAux[i] = "0"
-						arrPresentationsAux[i] = ""
-						morningSession[counter+1] = arrPresentations[i]
-						counter += 1
-					end
+				trackCounter = 0
+				loopContinue = false
+				arrAux=[]
+				begin
+					counter = 0
+					counter2 = 0
+					counter3 = 0
+					totalTimeMorningSession = 0
+					totalTimeAfternoonEvent = 0
+					totalTimeNetworkingEvent = 0
+					
+					i = 0
+					for i in 0..arrPresentations.length-1 do
+						if (totalTimeMorningSession < 180 and 
+							arrPresentationsAux[i] != "" and
+							totalTimeMorningSession + arrTimePresentationAux[i].to_i <= 180)
 
-					if (totalTimeNetworkingEvent < 60 and 
-						arrPresentationsAux[i] != "" and 
-						totalTimeNetworkingEvent + arrTimePresentationAux[i].to_i <= 60 and 
-						arrTimePresentation[i] != "45" and	
-						arrTimePresentation[i] != "05")
+							totalTimeMorningSession += arrTimePresentationAux[i].to_i
+							arrTimePresentationAux[i] = "0"
+							arrPresentationsAux[i] = ""
+							morningSession[counter+1] = arrPresentations[i]
+							counter += 1
+						end
 
-						totalTimeNetworkingEvent += arrTimePresentationAux[i].to_i
-						arrTimePresentationAux[i] = "0"
-						arrPresentationsAux[i] = ""
-						networkingEvent[counter2+1] = arrPresentations[i]
-						counter2 += 1
-					end
+						if (totalTimeNetworkingEvent < 60 and 
+							arrPresentationsAux[i] != "" and 
+							totalTimeNetworkingEvent + arrTimePresentationAux[i].to_i <= 60 and 
+							arrTimePresentation[i] != "45" and	
+							arrTimePresentation[i] != "05")
 
-					if (totalTimeAfternoonEvent < 180 and 
-						arrPresentationsAux[i] != "" and
-						totalTimeAfternoonEvent + arrTimePresentationAux[i].to_i <= 180)
+							totalTimeNetworkingEvent += arrTimePresentationAux[i].to_i
+							arrTimePresentationAux[i] = "0"
+							arrPresentationsAux[i] = ""
+							networkingEvent[counter2+1] = arrPresentations[i]
+							counter2 += 1
+						end
 
-						totalTimeAfternoonEvent += arrTimePresentationAux[i].to_i
-						arrTimePresentationAux[i] = "0"
-						arrPresentationsAux[i] = ""
-						afternoonSession[counter3+1] = arrPresentations[i]
-						counter3 += 1
+						if (totalTimeAfternoonEvent < 180 and 
+							arrPresentationsAux[i] != "" and
+							totalTimeAfternoonEvent + arrTimePresentationAux[i].to_i <= 180)
+
+							totalTimeAfternoonEvent += arrTimePresentationAux[i].to_i
+							arrTimePresentationAux[i] = "0"
+							arrPresentationsAux[i] = ""
+							if (arrTimePresentation[i].to_s == "05")
+								timeValuePresentation = "05"
+							else
+								timeValuePresentation = arrTimePresentation[i]
+							end
+							afternoonSession[counter3+1] = {"title":arrTitlePresentation[i],"time":timeValuePresentation}
+							counter3 += 1
+						end
 					end
 					
-				end
+					tracks[trackCounter] = {"track":{"morning":morningSession,"afternoonSession":afternoonSession,"networkingEvent":networkingEvent}}
+					
+					arrAux.clear
+					for z in 0..arrPresentationsAux.length-1 do
+						if arrPresentationsAux[z] != ""
+							arrAux.push(arrPresentationsAux[z])
+						end
+					end
+					trackCounter += 1
 
-				tracks = {"track":{"morning":morningSession,"afternoonSession":afternoonSession,"networkingEvent":networkingEvent}}
+					morningSession = {}
+					afternoonSession = {}
+					networkingEvent = {}
+
+				end while arrAux.length > 0	
 
 				render json:tracks
 			end
