@@ -3,9 +3,9 @@ module Api
 		class PresentationController < ApplicationController
       			
 			def index
-				@presentation = Presentation.new(presentation_params)
+				#@presentation = Presentation.new(presentation_params)
 
-				caminho = "/home/darlan/Downloads/proposals.txt"
+				path =  params[:path]				
 				arrPresentations = []
 				arrPresentationsAux = []
 				arrTitlePresentation = []
@@ -16,7 +16,7 @@ module Api
 				timePresentation = ""				
 				counter = 0
 
-				File.open(caminho, 'r') do |f1|
+				File.open(path, 'r') do |f1|
 				  while line = f1.gets
 					for i in 0..line.length do
 						if 
@@ -157,7 +157,7 @@ module Api
 
 			private
 			def presentation_params
-				params.permit(:title, :time)
+				params.permit(:path)
 			end
       
 		end
